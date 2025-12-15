@@ -6,7 +6,7 @@ import streamlit as st
 
 
 def inject_css(css_text: str) -> None:
-    # CSSを適用する
+    # CSSをアプリに適用する
     st.markdown(f"<style>{css_text}</style>", unsafe_allow_html=True)
 
 
@@ -38,7 +38,6 @@ def render_topbar(title: str, subtitle: str, set_label: str) -> None:
 
 def open_card(header_title: str, header_subtitle: str, header_badge: str) -> None:
     # カードの開始を描画する
-    badge_html = f'<div class="gx-badge accent">{header_badge}</div>' if header_badge else ""
     st.markdown(
         f"""
 <div class="gx-card">
@@ -47,7 +46,7 @@ def open_card(header_title: str, header_subtitle: str, header_badge: str) -> Non
       <b>{header_title}</b>
       <span>{header_subtitle}</span>
     </div>
-    {badge_html}
+    <div class="gx-badge accent">{header_badge}</div>
   </div>
   <div class="gx-card-bd">
 """,
@@ -61,7 +60,7 @@ def close_card() -> None:
 
 
 def render_progress(current: int, total: int, accuracy_pct: int) -> None:
-    # 進捗を描画する
+    # 進捗バーを描画する
     pct = 0 if total <= 0 else int(round((current / total) * 100))
     st.markdown(
         f"""
@@ -78,7 +77,7 @@ def render_progress(current: int, total: int, accuracy_pct: int) -> None:
 
 
 def render_tags(category: str, difficulty: int, qtype: str) -> None:
-    # タグを描画する
+    # タグ行を描画する
     st.markdown(
         f"""
 <div class="gx-tags">
@@ -96,17 +95,18 @@ def render_question_text(text: str) -> None:
     st.markdown(f'<div class="gx-qtext">{text}</div>', unsafe_allow_html=True)
 
 
-def render_result_summary(total: int, correct: int, wrong: int) -> None:
-    # 結果サマリーを描画する
-    rate = int(round((correct / total) * 100)) if total else 0
+def render_stats_panel(answered: int, correct: int, streak: int, remaining: int) -> None:
+    # 統計カードを描画する
+    open_card("学習状況", "最小限の指標だけ表示します", "")
     st.markdown(
         f"""
 <div class="gx-statgrid">
-  <div class="gx-stat"><small>総問題数</small><b>{total}</b></div>
-  <div class="gx-stat"><small>正解数</small><b>{correct}</b></div>
-  <div class="gx-stat"><small>不正解数</small><b>{wrong}</b></div>
-  <div class="gx-stat"><small>正答率</small><b>{rate}%</b></div>
+  <div class="gx-stat"><small>回答</small><b>{answered}</b></div>
+  <div class="gx-stat"><small>正解</small><b>{correct}</b></div>
+  <div class="gx-stat"><small>連続正解</small><b>{streak}</b></div>
+  <div class="gx-stat"><small>残り</small><b>{remaining}</b></div>
 </div>
 """,
         unsafe_allow_html=True,
     )
+    close_card()
