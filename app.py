@@ -30,7 +30,7 @@ def _init_state(total: int) -> None:
     if "idx" not in st.session_state:
         st.session_state.idx = 0
     if "selected" not in st.session_state:
-        st.session_state.selected = 0
+        st.session_state.selected = None  # 未選択
     if "answered" not in st.session_state:
         st.session_state.answered = False
     if "answered_count" not in st.session_state:
@@ -49,7 +49,7 @@ def _reset_run(total: int) -> None:
     # セッションをリセットする
     st.session_state.mode = "quiz"
     st.session_state.idx = 0
-    st.session_state.selected = 0
+    st.session_state.selected = None
     st.session_state.answered = False
     st.session_state.answered_count = 0
     st.session_state.correct_count = 0
@@ -67,13 +67,16 @@ def main() -> None:
     questions = get_questions()
     _init_state(len(questions))
 
+    # =========================
+    # 結果表示モード
+    # =========================
     if st.session_state.mode == "result":
         render_topbar("G検定 問題集", "結果表示", "基礎")
         st.write("")
 
         total_q = len(questions)
         correct = int(st.session_state.correct_count)
-        wrong = total_q - correct
+        wrong = len(st.session_state.wrong_log)
 
         open_card("結果", "集計", "&nbsp;")
         st.markdown(
@@ -95,7 +98,9 @@ def main() -> None:
             st.success("全問正解")
         else:
             for item in st.session_state.wrong_log:
-                with st.expander(f"問題 {item['q_index']}: {item['question']}", expanded=False):
+                with st.expander(f"問題 {item['q_index']}", expanded=False):
+                    st.write("問題文")
+                    st.write(item["question"])
                     st.write("あなたの回答")
                     st.write(item["selected"])
                     st.write("正解")
@@ -112,6 +117,9 @@ def main() -> None:
 
         return
 
+    # =========================
+    # 出題モード
+    # =========================
     idx = int(st.session_state.idx)
     total = len(questions)
     q = questions[idx]
@@ -137,35 +145,48 @@ def main() -> None:
 
         st.write("")
 
-        disabled = bool(st.session_state.answered)
+        # 選択肢（未選択を許容）
         choice = st.radio(
             "選択肢",
             options=list(range(len(q.options))),
             format_func=lambda i: q.options[i],
-            index=int(st.session_state.selected),
-            disabled=disabled,
+            index=st.session_state.selected,
+            disabled=st.session_state.answered,
             label_visibility="collapsed",
         )
 
-        if not disabled:
-            st.session_state.selected = int(choice)
+        if not st.session_state.answered:
+            st.session_state.selected = choice
 
         is_last = (idx == total - 1)
         next_label = "結果表示" if is_last else "次へ"
 
         c1, c2, c3 = st.columns([1, 1, 1.2])
         with c1:
-            judge = st.button("判定する", type="primary", disabled=disabled, use_container_width=True)
+            judge = st.button(
+                "判定する",
+                type="primary",
+                disabled=st.session_state.selected is None or st.session_state.answered,
+                use_container_width=True,
+            )
         with c2:
-            prev = st.button("前へ", disabled=(idx == 0), use_container_width=True)
+            prev = st.button(
+                "前へ",
+                disabled=(idx == 0),
+                use_container_width=True,
+            )
         with c3:
-            next_ = st.button(next_label, disabled=False, use_container_width=True)
+            next_ = st.button(
+                next_label,
+                disabled=not st.session_state.answered,
+                use_container_width=True,
+            )
 
         if judge:
             st.session_state.answered = True
             st.session_state.answered_count += 1
 
-            is_correct = (int(st.session_state.selected) == int(q.answer_index))
+            is_correct = st.session_state.selected == q.answer_index
             if is_correct:
                 st.session_state.correct_count += 1
                 st.session_state.streak += 1
@@ -178,8 +199,8 @@ def main() -> None:
                     {
                         "q_index": idx + 1,
                         "question": q.text,
-                        "selected": q.options[int(st.session_state.selected)],
-                        "correct": q.options[int(q.answer_index)],
+                        "selected": q.options[st.session_state.selected],
+                        "correct": q.options[q.answer_index],
                         "explanation": q.explanation,
                     }
                 )
@@ -189,19 +210,18 @@ def main() -> None:
 
         if prev:
             st.session_state.idx = max(0, idx - 1)
-            st.session_state.selected = 0
+            st.session_state.selected = None
             st.session_state.answered = False
             st.rerun()
 
         if next_:
             if is_last:
                 st.session_state.mode = "result"
-                st.rerun()
             else:
                 st.session_state.idx = min(total - 1, idx + 1)
-                st.session_state.selected = 0
+                st.session_state.selected = None
                 st.session_state.answered = False
-                st.rerun()
+            st.rerun()
 
     with right:
         open_card("学習状況", "最小限の指標だけ表示します", "&nbsp;")
