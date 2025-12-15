@@ -16,19 +16,27 @@ from ui.components import (
 
 
 def render_result_screen(questions: list) -> None:
-    # 結果表示画面を描画する（最終回答のみ正規化）
+    # 結果表示画面（最終回答ベースで正規化）
     render_topbar("G検定 問題集", "結果表示", "基礎")
     st.write("")
 
     total_q = len(questions)
-    correct = int(st.session_state.correct_count)
 
-    # ---- 正規化：問題ごとに最後の誤答だけ残す ----
-    final_wrong_map: dict[int, dict] = {}
+    # 最終回答が「誤答」の問題だけ抽出
+    final_wrong = []
     for item in st.session_state.wrong_log:
+        q_index = item["q_index"]
+        if not st.session_state.last_answer_map.get(q_index, False):
+            final_wrong.append(item)
+
+    # 問題番号ごとに最後の誤答だけ残す
+    final_wrong_map = {}
+    for item in final_wrong:
         final_wrong_map[item["q_index"]] = item
 
     final_wrong_list = list(final_wrong_map.values())
+
+    correct = total_q - len(final_wrong_list)
     wrong = len(final_wrong_list)
 
     open_card("結果", "集計（最終回答ベース）", "&nbsp;")
@@ -46,11 +54,10 @@ def render_result_screen(questions: list) -> None:
 
     st.write("")
 
-    open_card("間違えた問題", "最終回答のみ表示します", "&nbsp;")
+    open_card("間違えた問題", "最終的に誤答だった問題のみ", "&nbsp;")
     if wrong == 0:
         st.success("全問正解")
     else:
-        # 問題番号順に表示（UX安定）
         for item in sorted(final_wrong_list, key=lambda x: x["q_index"]):
             with st.expander(f"問題 {item['q_index']}", expanded=False):
                 st.write("問題文")
@@ -71,7 +78,7 @@ def render_result_screen(questions: list) -> None:
 
 
 def render_quiz_screen(questions: list) -> None:
-    # 出題画面を描画する
+    # 出題画面
     idx = int(st.session_state.idx)
     total = len(questions)
     q = questions[idx]
@@ -101,14 +108,19 @@ def render_quiz_screen(questions: list) -> None:
             st.session_state.answered = True
             st.session_state.answered_count += 1
 
-            if st.session_state.selected == q.answer_index:
+            q_no = idx + 1
+            is_correct = (st.session_state.selected == q.answer_index)
+
+            st.session_state.last_answer_map[q_no] = is_correct
+
+            if is_correct:
                 st.session_state.correct_count += 1
                 st.session_state.streak += 1
             else:
                 st.session_state.streak = 0
                 st.session_state.wrong_log.append(
                     {
-                        "q_index": idx + 1,
+                        "q_index": q_no,
                         "question": q.text,
                         "selected": q.options[st.session_state.selected],
                         "correct": q.options[q.answer_index],
