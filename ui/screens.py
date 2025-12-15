@@ -16,15 +16,22 @@ from ui.components import (
 
 
 def render_result_screen(questions: list) -> None:
-    # 結果表示画面を描画する
+    # 結果表示画面を描画する（最終回答のみ正規化）
     render_topbar("G検定 問題集", "結果表示", "基礎")
     st.write("")
 
     total_q = len(questions)
     correct = int(st.session_state.correct_count)
-    wrong = len(st.session_state.wrong_log)
 
-    open_card("結果", "集計", "&nbsp;")
+    # ---- 正規化：問題ごとに最後の誤答だけ残す ----
+    final_wrong_map: dict[int, dict] = {}
+    for item in st.session_state.wrong_log:
+        final_wrong_map[item["q_index"]] = item
+
+    final_wrong_list = list(final_wrong_map.values())
+    wrong = len(final_wrong_list)
+
+    open_card("結果", "集計（最終回答ベース）", "&nbsp;")
     st.markdown(
         f"""
 <div class="gx-statgrid">
@@ -39,11 +46,12 @@ def render_result_screen(questions: list) -> None:
 
     st.write("")
 
-    open_card("間違えた問題", "あなたの回答・正解・解説", "&nbsp;")
-    if len(st.session_state.wrong_log) == 0:
+    open_card("間違えた問題", "最終回答のみ表示します", "&nbsp;")
+    if wrong == 0:
         st.success("全問正解")
     else:
-        for item in st.session_state.wrong_log:
+        # 問題番号順に表示（UX安定）
+        for item in sorted(final_wrong_list, key=lambda x: x["q_index"]):
             with st.expander(f"問題 {item['q_index']}", expanded=False):
                 st.write("問題文")
                 st.write(item["question"])
