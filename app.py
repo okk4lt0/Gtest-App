@@ -45,6 +45,7 @@ def _init_state(total: int) -> None:
 
 def _reset_run(total: int) -> None:
     # セッションをリセットする
+    st.session_state.mode = "quiz"
     st.session_state.idx = 0
     st.session_state.selected = 0
     st.session_state.answered = False
@@ -66,10 +67,30 @@ def main() -> None:
     if st.session_state.mode == "result":
         render_topbar("G検定 問題集", "結果表示", "基礎")
         st.write("")
-        st.info("結果表示画面（ここに集計と誤答表示を実装します）")
+
+        total_q = len(questions)
+        correct = int(st.session_state.correct_count)
+        wrong = total_q - correct
+
+        open_card("結果", "集計", "&nbsp;")
+        st.markdown(
+            f"""
+<div class="gx-statgrid">
+  <div class="gx-stat"><small>総問題数</small><b>{total_q}</b></div>
+  <div class="gx-stat"><small>正解数</small><b>{correct}</b></div>
+  <div class="gx-stat"><small>不正解数</small><b>{wrong}</b></div>
+</div>
+""",
+            unsafe_allow_html=True,
+        )
+        close_card()
+
+        st.write("")
+
         if st.button("問題に戻る"):
             st.session_state.mode = "quiz"
             st.rerun()
+
         return
 
     idx = int(st.session_state.idx)
@@ -112,7 +133,7 @@ def main() -> None:
 
         is_last = (idx == total - 1)
         next_label = "結果表示" if is_last else "次へ"
-        
+
         c1, c2, c3 = st.columns([1, 1, 1.2])
         with c1:
             judge = st.button("判定する", type="primary", disabled=disabled, use_container_width=True)
