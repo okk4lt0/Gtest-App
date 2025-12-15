@@ -1,0 +1,277 @@
+/* ui/styles.css */
+
+/* Core tokens */
+:root{
+  --bg: #0b0f14;
+  --card: #111824;
+  --card2:#0f1620;
+  --text: #e9eef6;
+  --muted:#a7b3c7;
+  --line: rgba(255,255,255,.08);
+  --accent:#7c5cff;
+  --accent2:#23c483;
+  --danger:#ff4d6d;
+  --warn:#ffb020;
+  --shadow: 0 18px 60px rgba(0,0,0,.45);
+  --radius: 16px;
+  --radius2: 12px;
+  --focus: 0 0 0 3px rgba(124,92,255,.35);
+  --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Hiragino Sans", "Noto Sans JP", "Yu Gothic", "Meiryo", sans-serif;
+}
+
+/* App background + typography */
+.stApp{
+  font-family: var(--font);
+  color: var(--text);
+  background:
+    radial-gradient(1200px 700px at 25% -10%, rgba(124,92,255,.22), transparent 55%),
+    radial-gradient(900px 600px at 85% 0%, rgba(35,196,131,.16), transparent 55%),
+    var(--bg);
+}
+
+/* Layout width */
+.block-container{
+  max-width: 980px;
+  padding-top: 1.2rem;
+  padding-bottom: 2.2rem;
+}
+
+/* Hide default Streamlit chrome spacing issues */
+header, footer{ visibility: hidden; height: 0; }
+[data-testid="stToolbar"]{ visibility: hidden; height: 0; }
+[data-testid="stStatusWidget"]{ visibility: hidden; height: 0; }
+
+/* Generic button tuning */
+.stButton > button{
+  border-radius: 12px !important;
+  border: 1px solid var(--line) !important;
+  background: rgba(255,255,255,.03) !important;
+  color: var(--text) !important;
+  padding: 10px 12px !important;
+  transition: transform .06s ease, background .2s ease, border-color .2s ease;
+}
+.stButton > button:hover{ background: rgba(255,255,255,.06) !important; }
+.stButton > button:active{ transform: translateY(1px); }
+.stButton > button:focus-visible{ outline: none !important; box-shadow: var(--focus) !important; }
+
+/* Primary button (we will apply via CSS hook class if needed) */
+.gx-primary .stButton > button{
+  border-color: rgba(124,92,255,.45) !important;
+  background: rgba(124,92,255,.18) !important;
+}
+.gx-primary .stButton > button:hover{
+  background: rgba(124,92,255,.24) !important;
+}
+
+/* Topbar */
+.gx-topbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding: 14px 14px;
+  background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+  border:1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(10px);
+}
+.gx-brand{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-width:0;
+}
+.gx-logo{
+  width:38px;height:38px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--accent), rgba(124,92,255,.35));
+  display:grid;place-items:center;
+  border:1px solid rgba(255,255,255,.14);
+  box-shadow: 0 10px 25px rgba(124,92,255,.25);
+  flex:0 0 auto;
+}
+.gx-title{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  min-width:0;
+}
+.gx-title b{
+  font-size: 14.5px;
+  line-height:1.15;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.gx-title span{
+  font-size: 12px;
+  color:var(--muted);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.gx-actions{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex:0 0 auto;
+}
+.gx-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding: 10px 12px;
+  border-radius: 999px;
+  border:1px solid var(--line);
+  background: rgba(255,255,255,.03);
+}
+.gx-pill small{ color:var(--muted); font-size:12px; }
+.gx-pill b{ font-size:12.5px; }
+
+/* Card */
+.gx-card{
+  background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+  border:1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow:hidden;
+}
+.gx-card-hd{
+  padding: 14px 16px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  border-bottom:1px solid var(--line);
+}
+.gx-card-hd .left{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  min-width:0;
+}
+.gx-card-hd .left b{ font-size:13.5px; }
+.gx-card-hd .left span{ font-size:12px; color:var(--muted); }
+.gx-card-bd{ padding: 16px; }
+
+/* Badges */
+.gx-badge{
+  font-size:12px;
+  color: var(--muted);
+  padding: 6px 10px;
+  border-radius: 999px;
+  border:1px solid var(--line);
+  background: rgba(255,255,255,.03);
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+}
+.gx-badge.accent{
+  color: rgba(233,238,246,.92);
+  border-color: rgba(124,92,255,.35);
+  background: rgba(124,92,255,.16);
+}
+.gx-badge.ok{
+  color: rgba(233,238,246,.92);
+  border-color: rgba(35,196,131,.35);
+  background: rgba(35,196,131,.14);
+}
+.gx-badge.warn{
+  color: rgba(233,238,246,.92);
+  border-color: rgba(255,176,32,.35);
+  background: rgba(255,176,32,.12);
+}
+
+/* Progress */
+.gx-progress{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.gx-bar{
+  width:100%;
+  height:10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.06);
+  border:1px solid var(--line);
+  overflow:hidden;
+}
+.gx-bar > i{
+  display:block;
+  height:100%;
+  width:0%;
+  background: linear-gradient(90deg, var(--accent), rgba(35,196,131,.9));
+  border-radius: 999px;
+}
+.gx-meta{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  color:var(--muted);
+  font-size:12px;
+}
+
+/* Question text */
+.gx-qtext{
+  font-size: 18px;
+  line-height:1.6;
+  letter-spacing:.2px;
+}
+@media (max-width: 520px){
+  .gx-qtext{ font-size: 16.5px; }
+}
+
+/* Tag row */
+.gx-tags{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+/* Options: style Streamlit radio to match card options */
+div[role="radiogroup"] > label{
+  border:1px solid var(--line);
+  background: rgba(255,255,255,.03);
+  border-radius: 14px;
+  padding: 12px 12px;
+  margin: 0 0 10px 0;
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  cursor:pointer;
+}
+div[role="radiogroup"] > label:hover{
+  background: rgba(255,255,255,.06);
+}
+div[role="radiogroup"] > label:has(input:focus-visible){
+  box-shadow: var(--focus);
+}
+div[role="radiogroup"] > label span{
+  color: var(--text);
+  font-size: 14.5px;
+  line-height: 1.5;
+}
+
+/* Stat grid */
+.gx-statgrid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:10px;
+}
+.gx-stat{
+  padding: 12px;
+  border-radius: 14px;
+  border:1px solid var(--line);
+  background: rgba(255,255,255,.03);
+}
+.gx-stat small{ color:var(--muted); font-size:12px; display:block; }
+.gx-stat b{ font-size:18px; letter-spacing:.2px; }
+
+/* Divider feel */
+hr{
+  border: none;
+  border-top: 1px solid var(--line);
+  margin: 14px 0;
+}
