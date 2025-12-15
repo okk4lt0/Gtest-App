@@ -41,6 +41,8 @@ def _init_state(total: int) -> None:
         st.session_state.streak = 0
     if "total" not in st.session_state:
         st.session_state.total = total
+    if "wrong_log" not in st.session_state:
+        st.session_state.wrong_log = []
 
 
 def _reset_run(total: int) -> None:
@@ -53,6 +55,7 @@ def _reset_run(total: int) -> None:
     st.session_state.correct_count = 0
     st.session_state.streak = 0
     st.session_state.total = total
+    st.session_state.wrong_log = []
 
 
 def main() -> None:
@@ -155,6 +158,15 @@ def main() -> None:
                 st.session_state.streak = 0
                 st.error("不正解")
                 st.info(f"正解：{q.options[q.answer_index]}")
+                st.session_state.wrong_log.append(
+                    {
+                        "q_index": idx + 1,
+                        "question": q.text,
+                        "selected": q.options[int(st.session_state.selected)],
+                        "correct": q.options[int(q.answer_index)],
+                        "explanation": q.explanation,
+                    }
+                )
 
         with st.expander("解説", expanded=False):
             st.write(q.explanation)
