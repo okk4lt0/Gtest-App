@@ -4,7 +4,15 @@ from __future__ import annotations
 
 import streamlit as st
 
-from ui.components import close_card, open_card, render_progress, render_question_text, render_tags, render_topbar
+from core.state import reset_run
+from ui.components import (
+    close_card,
+    open_card,
+    render_progress,
+    render_question_text,
+    render_tags,
+    render_topbar,
+)
 
 
 def render_result_screen(questions: list) -> None:
@@ -85,8 +93,7 @@ def render_quiz_screen(questions: list) -> None:
             st.session_state.answered = True
             st.session_state.answered_count += 1
 
-            is_correct_now = st.session_state.selected == q.answer_index
-            if is_correct_now:
+            if st.session_state.selected == q.answer_index:
                 st.session_state.correct_count += 1
                 st.session_state.streak += 1
             else:
@@ -174,15 +181,7 @@ def render_quiz_screen(questions: list) -> None:
 
         open_card("操作", "まずは最小機能で運用します", "&nbsp;")
         if st.button("リセット", use_container_width=True):
-            st.session_state.mode = "quiz"
-            st.session_state.idx = 0
-            st.session_state.selected = None
-            st.session_state.answered = False
-            st.session_state.answered_count = 0
-            st.session_state.correct_count = 0
-            st.session_state.streak = 0
-            st.session_state.total = total
-            st.session_state.wrong_log = []
+            reset_run(total)
             st.rerun()
         close_card()
 
