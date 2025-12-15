@@ -1,0 +1,40 @@
+# core/state.py
+
+from __future__ import annotations
+
+import streamlit as st
+
+
+def init_state(total: int) -> None:
+    # 状態を初期化する
+    if "mode" not in st.session_state:
+        st.session_state.mode = "quiz"
+    if "idx" not in st.session_state:
+        st.session_state.idx = 0
+    if "selected" not in st.session_state:
+        st.session_state.selected = None
+    if "answered" not in st.session_state:
+        st.session_state.answered = False
+    if "answered_count" not in st.session_state:
+        st.session_state.answered_count = 0
+    if "correct_count" not in st.session_state:
+        st.session_state.correct_count = 0
+    if "streak" not in st.session_state:
+        st.session_state.streak = 0
+    if "total" not in st.session_state:
+        st.session_state.total = total
+    if "wrong_log" not in st.session_state:
+        st.session_state.wrong_log = []
+
+
+def reset_run(total: int) -> None:
+    # セッションをリセットする
+    st.session_state.mode = "quiz"
+    st.session_state.idx = 0
+    st.session_state.selected = None
+    st.session_state.answered = False
+    st.session_state.answered_count = 0
+    st.session_state.correct_count = 0
+    st.session_state.streak = 0
+    st.session_state.total = total
+    st.session_state.wrong_log = []
