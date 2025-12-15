@@ -104,8 +104,10 @@ def main() -> None:
             judge = st.button("判定する", type="primary", disabled=disabled, use_container_width=True)
         with c2:
             prev = st.button("前へ", disabled=(idx == 0), use_container_width=True)
+        is_last = (idx == total - 1)
+        next_label = "結果表示" if is_last else "次へ"
         with c3:
-            next_ = st.button("次へ", disabled=(idx == total - 1), use_container_width=True)
+            next_ = st.button(next_label, disabled=is_last, use_container_width=True)
 
         if judge:
             st.session_state.answered = True
