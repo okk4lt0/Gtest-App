@@ -25,6 +25,8 @@ def _read_text(path: Path) -> str:
 
 def _init_state(total: int) -> None:
     # 状態を初期化する
+    if "mode" not in st.session_state:
+        st.session_state.mode = "quiz"
     if "idx" not in st.session_state:
         st.session_state.idx = 0
     if "selected" not in st.session_state:
@@ -60,6 +62,15 @@ def main() -> None:
 
     questions = get_questions()
     _init_state(len(questions))
+
+    if st.session_state.mode == "result":
+        render_topbar("G検定 問題集", "結果表示", "基礎")
+        st.write("")
+        st.info("結果表示画面（ここに集計と誤答表示を実装します）")
+        if st.button("問題に戻る"):
+            st.session_state.mode = "quiz"
+            st.rerun()
+        return
 
     idx = int(st.session_state.idx)
     total = len(questions)
@@ -99,15 +110,16 @@ def main() -> None:
         if not disabled:
             st.session_state.selected = int(choice)
 
+        is_last = (idx == total - 1)
+        next_label = "結果表示" if is_last else "次へ"
+        
         c1, c2, c3 = st.columns([1, 1, 1.2])
         with c1:
             judge = st.button("判定する", type="primary", disabled=disabled, use_container_width=True)
         with c2:
             prev = st.button("前へ", disabled=(idx == 0), use_container_width=True)
-        is_last = (idx == total - 1)
-        next_label = "結果表示" if is_last else "次へ"
         with c3:
-            next_ = st.button(next_label, disabled=is_last, use_container_width=True)
+            next_ = st.button(next_label, disabled=False, use_container_width=True)
 
         if judge:
             st.session_state.answered = True
@@ -133,10 +145,14 @@ def main() -> None:
             st.rerun()
 
         if next_:
-            st.session_state.idx = min(total - 1, idx + 1)
-            st.session_state.selected = 0
-            st.session_state.answered = False
-            st.rerun()
+            if is_last:
+                st.session_state.mode = "result"
+                st.rerun()
+            else:
+                st.session_state.idx = min(total - 1, idx + 1)
+                st.session_state.selected = 0
+                st.session_state.answered = False
+                st.rerun()
 
     with right:
         open_card("学習状況", "最小限の指標だけ表示します", "&nbsp;")
