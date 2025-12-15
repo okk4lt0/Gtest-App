@@ -22,15 +22,13 @@ def render_result_screen(questions: list) -> None:
 
     total_q = len(questions)
 
-    # 最終回答が「誤答」の問題だけ抽出
     final_wrong = []
     for item in st.session_state.wrong_log:
         q_index = item["q_index"]
         if not st.session_state.last_answer_map.get(q_index, False):
             final_wrong.append(item)
 
-    # 問題番号ごとに最後の誤答だけ残す
-    final_wrong_map = {}
+    final_wrong_map: dict[int, dict] = {}
     for item in final_wrong:
         final_wrong_map[item["q_index"]] = item
 
@@ -83,10 +81,10 @@ def render_quiz_screen(questions: list) -> None:
     total = len(questions)
     q = questions[idx]
 
+    # 進捗/正答率（ここは既存のまま）
     answered = int(st.session_state.answered_count)
     correct = int(st.session_state.correct_count)
     accuracy = int(round((correct / answered) * 100)) if answered else 0
-    remaining = max(0, total - answered)
 
     render_topbar("G検定 問題集", "出題モード（単問）", "基礎")
     st.write("")
@@ -183,14 +181,19 @@ def render_quiz_screen(questions: list) -> None:
             st.rerun()
 
     with right:
-        open_card("学習状況", "最小限の指標だけ表示します", "&nbsp;")
+        # 学習状況（最終回答ベース）
+        final_answered = len(st.session_state.last_answer_map)
+        final_correct = sum(1 for v in st.session_state.last_answer_map.values() if v)
+        final_remaining = max(0, total - final_answered)
+
+        open_card("学習状況", "結果表示と同じ定義で表示します", "&nbsp;")
         st.markdown(
             f"""
 <div class="gx-statgrid">
-  <div class="gx-stat"><small>回答</small><b>{answered}</b></div>
-  <div class="gx-stat"><small>正解</small><b>{correct}</b></div>
+  <div class="gx-stat"><small>回答</small><b>{final_answered}</b></div>
+  <div class="gx-stat"><small>正解</small><b>{final_correct}</b></div>
   <div class="gx-stat"><small>連続正解</small><b>{int(st.session_state.streak)}</b></div>
-  <div class="gx-stat"><small>残り</small><b>{remaining}</b></div>
+  <div class="gx-stat"><small>残り</small><b>{final_remaining}</b></div>
 </div>
 """,
             unsafe_allow_html=True,
