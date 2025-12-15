@@ -25,6 +25,8 @@ def init_state(total: int) -> None:
         st.session_state.total = total
     if "wrong_log" not in st.session_state:
         st.session_state.wrong_log = []
+    if "last_answer_map" not in st.session_state:
+        st.session_state.last_answer_map = {}
 
 
 def reset_run(total: int) -> None:
@@ -38,3 +40,4 @@ def reset_run(total: int) -> None:
     st.session_state.streak = 0
     st.session_state.total = total
     st.session_state.wrong_log = []
+    st.session_state.last_answer_map = {}
