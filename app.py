@@ -90,6 +90,22 @@ def main() -> None:
 
         st.write("")
 
+        open_card("間違えた問題", "あなたの回答・正解・解説", "&nbsp;")
+        if len(st.session_state.wrong_log) == 0:
+            st.success("全問正解")
+        else:
+            for item in st.session_state.wrong_log:
+                with st.expander(f"問題 {item['q_index']}: {item['question']}", expanded=False):
+                    st.write("あなたの回答")
+                    st.write(item["selected"])
+                    st.write("正解")
+                    st.write(item["correct"])
+                    st.write("解説")
+                    st.write(item["explanation"])
+        close_card()
+
+        st.write("")
+
         if st.button("問題に戻る"):
             st.session_state.mode = "quiz"
             st.rerun()
