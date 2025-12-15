@@ -6,7 +6,7 @@ import streamlit as st
 
 
 def inject_css(css_text: str) -> None:
-    # CSSをアプリに適用する
+    # CSSを適用する
     st.markdown(f"<style>{css_text}</style>", unsafe_allow_html=True)
 
 
@@ -61,7 +61,7 @@ def close_card() -> None:
 
 
 def render_progress(current: int, total: int, accuracy_pct: int) -> None:
-    # 進捗バーを描画する
+    # 進捗を描画する
     pct = 0 if total <= 0 else int(round((current / total) * 100))
     st.markdown(
         f"""
@@ -78,7 +78,7 @@ def render_progress(current: int, total: int, accuracy_pct: int) -> None:
 
 
 def render_tags(category: str, difficulty: int, qtype: str) -> None:
-    # タグ行を描画する
+    # タグを描画する
     st.markdown(
         f"""
 <div class="gx-tags">
@@ -98,13 +98,14 @@ def render_question_text(text: str) -> None:
 
 def render_result_summary(total: int, correct: int, wrong: int) -> None:
     # 結果サマリーを描画する
+    rate = int(round((correct / total) * 100)) if total else 0
     st.markdown(
         f"""
 <div class="gx-statgrid">
   <div class="gx-stat"><small>総問題数</small><b>{total}</b></div>
   <div class="gx-stat"><small>正解数</small><b>{correct}</b></div>
   <div class="gx-stat"><small>不正解数</small><b>{wrong}</b></div>
-  <div class="gx-stat"><small>正答率</small><b>{int(round((correct/total)*100)) if total else 0}%</b></div>
+  <div class="gx-stat"><small>正答率</small><b>{rate}%</b></div>
 </div>
 """,
         unsafe_allow_html=True,
