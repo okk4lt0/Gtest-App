@@ -145,6 +145,28 @@ def main() -> None:
 
         st.write("")
 
+        # 判定処理（コールバック）
+        def _on_judge() -> None:
+            st.session_state.answered = True
+            st.session_state.answered_count += 1
+
+            is_correct = st.session_state.selected == q.answer_index
+            if is_correct:
+                st.session_state.correct_count += 1
+                st.session_state.streak += 1
+            else:
+                st.session_state.streak = 0
+                st.session_state.wrong_log.append(
+                    {
+                        "q_index": idx + 1,
+                        "question": q.text,
+                        "selected": q.options[st.session_state.selected],
+                        "correct": q.options[q.answer_index],
+                        "explanation": q.explanation,
+                    }
+                )
+
+        # 選択肢（未選択を許容）
         choice = st.radio(
             "選択肢",
             options=list(range(len(q.options))),
@@ -162,11 +184,12 @@ def main() -> None:
 
         c1, c2, c3 = st.columns([1, 1, 1.2])
         with c1:
-            judge = st.button(
+            st.button(
                 "判定する",
                 type="primary",
                 disabled=st.session_state.selected is None or st.session_state.answered,
                 use_container_width=True,
+                on_click=_on_judge,
             )
         with c2:
             prev = st.button(
@@ -181,30 +204,13 @@ def main() -> None:
                 use_container_width=True,
             )
 
-        if judge:
-            st.session_state.answered = True
-            st.session_state.answered_count += 1
-
-            is_correct = st.session_state.selected == q.answer_index
-            if is_correct:
-                st.session_state.correct_count += 1
-                st.session_state.streak += 1
+        # 判定結果の表示（追加状態なし：answered + selected から再計算）
+        if st.session_state.answered:
+            if st.session_state.selected == q.answer_index:
                 st.success("正解")
             else:
-                st.session_state.streak = 0
                 st.error("不正解")
                 st.info(f"正解：{q.options[q.answer_index]}")
-                st.session_state.wrong_log.append(
-                    {
-                        "q_index": idx + 1,
-                        "question": q.text,
-                        "selected": q.options[st.session_state.selected],
-                        "correct": q.options[q.answer_index],
-                        "explanation": q.explanation,
-                    }
-                )
-
-            st.rerun()  # ★ 修正点：判定後に再描画
 
         with st.expander("解説", expanded=False):
             st.write(q.explanation)
