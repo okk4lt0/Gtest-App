@@ -30,7 +30,7 @@ def _init_state(total: int) -> None:
     if "idx" not in st.session_state:
         st.session_state.idx = 0
     if "selected" not in st.session_state:
-        st.session_state.selected = None  # 未選択
+        st.session_state.selected = None
     if "answered" not in st.session_state:
         st.session_state.answered = False
     if "answered_count" not in st.session_state:
@@ -145,7 +145,6 @@ def main() -> None:
 
         st.write("")
 
-        # 選択肢（未選択を許容）
         choice = st.radio(
             "選択肢",
             options=list(range(len(q.options))),
@@ -204,6 +203,8 @@ def main() -> None:
                         "explanation": q.explanation,
                     }
                 )
+
+            st.rerun()  # ★ 修正点：判定後に再描画
 
         with st.expander("解説", expanded=False):
             st.write(q.explanation)
