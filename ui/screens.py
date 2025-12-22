@@ -16,21 +16,18 @@ from ui.components import (
 
 
 def render_result_screen(questions: list) -> None:
-    # 結果表示画面：最終回答ベース
     render_topbar("G検定 問題集", "結果表示", "基礎")
     st.write("")
 
     total_q = len(questions)
 
-    # 最終的に誤答だった問題だけ抽出
     final_wrong = []
     for item in st.session_state.wrong_log:
         q_index = item["q_index"]
         if not st.session_state.last_answer_map.get(q_index, False):
             final_wrong.append(item)
 
-    # 問題番号ごとに最後の誤答だけ残す
-    final_wrong_map: dict[int, dict] = {}
+    final_wrong_map = {}
     for item in final_wrong:
         final_wrong_map[item["q_index"]] = item
 
@@ -39,7 +36,7 @@ def render_result_screen(questions: list) -> None:
     wrong = len(final_wrong_list)
     correct = total_q - wrong
 
-    open_card("結果", "集計（最終回答ベース）", "&nbsp;")
+    open_card("結果", "最終結果", "&nbsp;")
     st.markdown(
         f"""
 <div class="gx-statgrid">
@@ -54,7 +51,7 @@ def render_result_screen(questions: list) -> None:
 
     st.write("")
 
-    open_card("間違えた問題", "最終回答だけで評価", "&nbsp;")
+    open_card("間違えた問題", "最終回答ベースで抽出", "&nbsp;")
     if wrong == 0:
         st.success("全問正解")
     else:
@@ -72,7 +69,6 @@ def render_result_screen(questions: list) -> None:
 
     st.write("")
 
-    # 「もう一度」ボタンで完全リセットして問題1から再開
     if st.button("もう一度", type="primary", use_container_width=True):
         reset_run(total_q)
         st.session_state.mode = "quiz"
@@ -80,12 +76,10 @@ def render_result_screen(questions: list) -> None:
 
 
 def render_quiz_screen(questions: list) -> None:
-    # 出題画面
     idx = int(st.session_state.idx)
     total = len(questions)
     q = questions[idx]
 
-    # 進捗バー用（回答回数ベース）
     answered = int(st.session_state.answered_count)
     correct = int(st.session_state.correct_count)
     accuracy = int(round((correct / answered) * 100)) if answered else 0
@@ -107,14 +101,12 @@ def render_quiz_screen(questions: list) -> None:
         st.write("")
 
         def _on_judge() -> None:
-            # 判定処理
             st.session_state.answered = True
             st.session_state.answered_count += 1
 
             q_no = idx + 1
             is_correct = (st.session_state.selected == q.answer_index)
 
-            # 最終回答の正誤を更新
             st.session_state.last_answer_map[q_no] = is_correct
 
             if is_correct:
@@ -132,7 +124,6 @@ def render_quiz_screen(questions: list) -> None:
                     }
                 )
 
-        # ラジオの index は None を避ける
         initial_index = st.session_state.selected if st.session_state.selected is not None else 0
 
         choice = st.radio(
@@ -190,12 +181,11 @@ def render_quiz_screen(questions: list) -> None:
             st.rerun()
 
     with right:
-        # 学習状況：最終回答ベース
         final_answered = len(st.session_state.last_answer_map)
         final_correct = sum(1 for v in st.session_state.last_answer_map.values() if v)
         final_remaining = total - final_answered
 
-        open_card("学習状況", "最終回答ベースで表示", "&nbsp;")
+        open_card("学習状況", "最終回答ベース", "&nbsp;")
         st.markdown(
             f"""
 <div class="gx-statgrid">
@@ -211,10 +201,6 @@ def render_quiz_screen(questions: list) -> None:
 
         st.write("")
 
-        open_card("操作", "まずは最小機能で運用します", "&nbsp;")
         if st.button("リセット", use_container_width=True):
             reset_run(total)
             st.rerun()
-        close_card()
-
-    st.caption("MVP：出題 → 回答 → 正誤判定。UIはHTML版の構造と見た目に寄せています。")
