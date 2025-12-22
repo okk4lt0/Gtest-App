@@ -72,13 +72,16 @@ def render_result_screen(questions: list) -> None:
 
     st.write("")
 
-    if st.button("問題に戻る"):
+    # ★ここが変更点★
+    if st.button("もう一度", type="primary", use_container_width=True):
+        # 完全リセットして問題1から
+        reset_run(total_q)
         st.session_state.mode = "quiz"
         st.rerun()
 
 
 def render_quiz_screen(questions: list) -> None:
-    # 出題画面
+    # ここから下は変更なし
     idx = int(st.session_state.idx)
     total = len(questions)
     q = questions[idx]
@@ -110,7 +113,6 @@ def render_quiz_screen(questions: list) -> None:
             q_no = idx + 1
             is_correct = (st.session_state.selected == q.answer_index)
 
-            # 最終回答を更新
             st.session_state.last_answer_map[q_no] = is_correct
 
             if is_correct:
@@ -183,7 +185,6 @@ def render_quiz_screen(questions: list) -> None:
             st.rerun()
 
     with right:
-        # 最終回答ベース
         final_answered = len(st.session_state.last_answer_map)
         final_correct = sum(1 for v in st.session_state.last_answer_map.values() if v)
         final_remaining = total - final_answered
