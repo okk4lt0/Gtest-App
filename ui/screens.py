@@ -30,7 +30,7 @@ def render_result_screen(questions: list) -> None:
             final_wrong.append(item)
 
     # 問題番号ごとに最後の誤答だけ残す
-    final_wrong_map = {}
+    final_wrong_map: dict[int, dict] = {}
     for item in final_wrong:
         final_wrong_map[item["q_index"]] = item
 
@@ -72,20 +72,20 @@ def render_result_screen(questions: list) -> None:
 
     st.write("")
 
-    # ★ここが変更点★
+    # 「もう一度」ボタンで完全リセットして問題1から再開
     if st.button("もう一度", type="primary", use_container_width=True):
-        # 完全リセットして問題1から
         reset_run(total_q)
         st.session_state.mode = "quiz"
         st.rerun()
 
 
 def render_quiz_screen(questions: list) -> None:
-    # ここから下は変更なし
+    # 出題画面
     idx = int(st.session_state.idx)
     total = len(questions)
     q = questions[idx]
 
+    # 進捗バー用（回答回数ベース）
     answered = int(st.session_state.answered_count)
     correct = int(st.session_state.correct_count)
     accuracy = int(round((correct / answered) * 100)) if answered else 0
@@ -107,12 +107,14 @@ def render_quiz_screen(questions: list) -> None:
         st.write("")
 
         def _on_judge() -> None:
+            # 判定処理
             st.session_state.answered = True
             st.session_state.answered_count += 1
 
             q_no = idx + 1
             is_correct = (st.session_state.selected == q.answer_index)
 
+            # 最終回答の正誤を更新
             st.session_state.last_answer_map[q_no] = is_correct
 
             if is_correct:
@@ -130,11 +132,14 @@ def render_quiz_screen(questions: list) -> None:
                     }
                 )
 
+        # ラジオの index は None を避ける
+        initial_index = st.session_state.selected if st.session_state.selected is not None else 0
+
         choice = st.radio(
             "選択肢",
             options=list(range(len(q.options))),
             format_func=lambda i: q.options[i],
-            index=st.session_state.selected,
+            index=initial_index,
             disabled=st.session_state.answered,
             label_visibility="collapsed",
         )
@@ -185,6 +190,7 @@ def render_quiz_screen(questions: list) -> None:
             st.rerun()
 
     with right:
+        # 学習状況：最終回答ベース
         final_answered = len(st.session_state.last_answer_map)
         final_correct = sum(1 for v in st.session_state.last_answer_map.values() if v)
         final_remaining = total - final_answered
