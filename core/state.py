@@ -26,11 +26,11 @@ def init_state(total: int) -> None:
     if "wrong_log" not in st.session_state:
         st.session_state.wrong_log = []
     if "last_answer_map" not in st.session_state:
-        st.session_state.last_answer_map = {}
+        st.session_state.last_answer_map = {}  # 最終回答の正誤（True/False）
 
 
 def reset_run(total: int) -> None:
-    # セッションをリセットする
+    # セッションを完全リセット
     st.session_state.mode = "quiz"
     st.session_state.idx = 0
     st.session_state.selected = None
