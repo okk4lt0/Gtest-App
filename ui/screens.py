@@ -16,20 +16,26 @@ from ui.components import (
 
 
 def render_result_screen(questions: list) -> None:
+    # 結果表示：最終回答ベース
     render_topbar("G検定 問題集", "結果表示", "基礎")
     st.write("")
 
     total_q = len(questions)
 
+    # 最終的に誤答だった問題だけ抽出
     final_wrong = []
     for item in st.session_state.wrong_log:
-        q_index = item["q_index"]
+        q_index = item.get("q_index")
+        if not isinstance(q_index, int):
+            continue
         if not st.session_state.last_answer_map.get(q_index, False):
             final_wrong.append(item)
 
-    final_wrong_map = {}
+    # 問題番号ごとに最後の誤答だけ残す
+    final_wrong_map: dict[int, dict] = {}
     for item in final_wrong:
-        final_wrong_map[item["q_index"]] = item
+        q_index = item["q_index"]
+        final_wrong_map[q_index] = item
 
     final_wrong_list = list(final_wrong_map.values())
 
@@ -51,24 +57,25 @@ def render_result_screen(questions: list) -> None:
 
     st.write("")
 
-    open_card("間違えた問題", "最終回答ベースで抽出", "&nbsp;")
+    open_card("間違えた問題", "最終回答ベース", "&nbsp;")
     if wrong == 0:
         st.success("全問正解")
     else:
         for item in sorted(final_wrong_list, key=lambda x: x["q_index"]):
             with st.expander(f"問題 {item['q_index']}", expanded=False):
                 st.write("問題文")
-                st.write(item["question"])
+                st.write(item.get("question", ""))
                 st.write("あなたの回答")
-                st.write(item["selected"])
+                st.write(item.get("selected", ""))
                 st.write("正解")
-                st.write(item["correct"])
+                st.write(item.get("correct", ""))
                 st.write("解説")
-                st.write(item["explanation"])
+                st.write(item.get("explanation", ""))
     close_card()
 
     st.write("")
 
+    # 「もう一度」：完全リセットして問題1から
     if st.button("もう一度", type="primary", use_container_width=True):
         reset_run(total_q)
         st.session_state.mode = "quiz"
@@ -76,13 +83,29 @@ def render_result_screen(questions: list) -> None:
 
 
 def render_quiz_screen(questions: list) -> None:
+    # 出題画面
     idx = int(st.session_state.idx)
     total = len(questions)
+
+    # 破損状態のガード
+    if total == 0:
+        render_topbar("G検定 問題集", "出題モード（単問）", "基礎")
+        st.error("問題がありません。")
+        return
+
+    if idx < 0:
+        idx = 0
+        st.session_state.idx = 0
+    if idx >= total:
+        idx = total - 1
+        st.session_state.idx = idx
+
     q = questions[idx]
 
-    answered = int(st.session_state.answered_count)
-    correct = int(st.session_state.correct_count)
-    accuracy = int(round((correct / answered) * 100)) if answered else 0
+    # 進捗表示用（回数ベースのまま）
+    answered_count = int(st.session_state.answered_count)
+    correct_count = int(st.session_state.correct_count)
+    accuracy = int(round((correct_count / answered_count) * 100)) if answered_count else 0
 
     render_topbar("G検定 問題集", "出題モード（単問）", "基礎")
     st.write("")
@@ -100,14 +123,34 @@ def render_quiz_screen(questions: list) -> None:
 
         st.write("")
 
+        disabled = bool(st.session_state.answered)
+
+        # st.radio は None を index にできないため、安全に 0 を使う
+        initial_index = int(st.session_state.selected) if st.session_state.selected is not None else 0
+
+        choice = st.radio(
+            "選択肢",
+            options=list(range(len(q.options))),
+            format_func=lambda i: q.options[i],
+            index=initial_index,
+            disabled=disabled,
+            label_visibility="collapsed",
+        )
+
+        if not disabled:
+            st.session_state.selected = int(choice)
+
         def _on_judge() -> None:
+            # 判定処理
             st.session_state.answered = True
             st.session_state.answered_count += 1
 
             q_no = idx + 1
-            is_correct = (st.session_state.selected == q.answer_index)
+            selected_idx = int(st.session_state.selected)
+            is_correct = (selected_idx == int(q.answer_index))
 
-            st.session_state.last_answer_map[q_no] = is_correct
+            # 最終回答の正誤（上書き）
+            st.session_state.last_answer_map[q_no] = bool(is_correct)
 
             if is_correct:
                 st.session_state.correct_count += 1
@@ -118,25 +161,11 @@ def render_quiz_screen(questions: list) -> None:
                     {
                         "q_index": q_no,
                         "question": q.text,
-                        "selected": q.options[st.session_state.selected],
+                        "selected": q.options[selected_idx],
                         "correct": q.options[q.answer_index],
                         "explanation": q.explanation,
                     }
                 )
-
-        initial_index = st.session_state.selected if st.session_state.selected is not None else 0
-
-        choice = st.radio(
-            "選択肢",
-            options=list(range(len(q.options))),
-            format_func=lambda i: q.options[i],
-            index=initial_index,
-            disabled=st.session_state.answered,
-            label_visibility="collapsed",
-        )
-
-        if not st.session_state.answered:
-            st.session_state.selected = choice
 
         is_last = (idx == total - 1)
         next_label = "結果表示" if is_last else "次へ"
@@ -146,17 +175,19 @@ def render_quiz_screen(questions: list) -> None:
             st.button(
                 "判定する",
                 type="primary",
-                disabled=(st.session_state.selected is None or st.session_state.answered),
+                disabled=disabled,
                 use_container_width=True,
                 on_click=_on_judge,
             )
         with c2:
             prev = st.button("前へ", disabled=(idx == 0), use_container_width=True)
         with c3:
-            next_ = st.button(next_label, disabled=not st.session_state.answered, use_container_width=True)
+            # 判定済みでないと次へ進めない（未判定のまま進行しない）
+            next_ = st.button(next_label, disabled=not disabled, use_container_width=True)
 
-        if st.session_state.answered:
-            if st.session_state.selected == q.answer_index:
+        # 判定結果の表示（判定済みのときのみ）
+        if bool(st.session_state.answered):
+            if int(st.session_state.selected) == int(q.answer_index):
                 st.success("正解")
             else:
                 st.error("不正解")
@@ -181,18 +212,19 @@ def render_quiz_screen(questions: list) -> None:
             st.rerun()
 
     with right:
+        # 学習状況：最終回答ベース
         final_answered = len(st.session_state.last_answer_map)
         final_correct = sum(1 for v in st.session_state.last_answer_map.values() if v)
-        final_remaining = total - final_answered
+        final_remaining = max(0, total - final_answered)
 
-        open_card("学習状況", "最終回答ベース", "&nbsp;")
+        open_card("学習状況", "", "&nbsp;")
         st.markdown(
             f"""
 <div class="gx-statgrid">
   <div class="gx-stat"><small>回答</small><b>{final_answered}</b></div>
   <div class="gx-stat"><small>正解</small><b>{final_correct}</b></div>
+  <div class="gx-stat"><small>不正解</small><b>{final_answered - final_correct}</b></div>
   <div class="gx-stat"><small>残り</small><b>{final_remaining}</b></div>
-  <div class="gx-stat"><small>連続正解</small><b>{int(st.session_state.streak)}</b></div>
 </div>
 """,
             unsafe_allow_html=True,
@@ -201,6 +233,8 @@ def render_quiz_screen(questions: list) -> None:
 
         st.write("")
 
+        open_card("リセット", "", "&nbsp;")
         if st.button("リセット", use_container_width=True):
             reset_run(total)
             st.rerun()
+        close_card()
