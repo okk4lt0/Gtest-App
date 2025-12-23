@@ -22,7 +22,6 @@ def render_result_screen(questions: list) -> None:
 
     total_q = len(questions)
 
-    # 最終的に誤答だった問題だけ抽出
     final_wrong = []
     for item in st.session_state.wrong_log:
         q_index = item.get("q_index")
@@ -31,7 +30,6 @@ def render_result_screen(questions: list) -> None:
         if not st.session_state.last_answer_map.get(q_index, False):
             final_wrong.append(item)
 
-    # 問題番号ごとに最後の誤答だけ残す
     final_wrong_map: dict[int, dict] = {}
     for item in final_wrong:
         q_index = item["q_index"]
@@ -42,7 +40,7 @@ def render_result_screen(questions: list) -> None:
     wrong = len(final_wrong_list)
     correct = total_q - wrong
 
-    open_card("結果", "最終結果", "&nbsp;")
+    open_card("結果", "最終結果", "")
     st.markdown(
         f"""
 <div class="gx-statgrid">
@@ -57,7 +55,7 @@ def render_result_screen(questions: list) -> None:
 
     st.write("")
 
-    open_card("間違えた問題", "最終回答ベース", "&nbsp;")
+    open_card("間違えた問題", "最終回答ベース", "")
     if wrong == 0:
         st.success("全問正解")
     else:
@@ -75,7 +73,6 @@ def render_result_screen(questions: list) -> None:
 
     st.write("")
 
-    # 「もう一度」：完全リセットして問題1から
     if st.button("もう一度", type="primary", use_container_width=True):
         reset_run(total_q)
         st.session_state.mode = "quiz"
@@ -87,7 +84,6 @@ def render_quiz_screen(questions: list) -> None:
     idx = int(st.session_state.idx)
     total = len(questions)
 
-    # 破損状態のガード
     if total == 0:
         render_topbar("G検定 問題集", "出題モード（単問）", "基礎")
         st.error("問題がありません。")
@@ -102,7 +98,6 @@ def render_quiz_screen(questions: list) -> None:
 
     q = questions[idx]
 
-    # 進捗表示用（回数ベースのまま）
     answered_count = int(st.session_state.answered_count)
     correct_count = int(st.session_state.correct_count)
     accuracy = int(round((correct_count / answered_count) * 100)) if answered_count else 0
@@ -124,8 +119,6 @@ def render_quiz_screen(questions: list) -> None:
         st.write("")
 
         disabled = bool(st.session_state.answered)
-
-        # st.radio は None を index にできないため、安全に 0 を使う
         initial_index = int(st.session_state.selected) if st.session_state.selected is not None else 0
 
         choice = st.radio(
@@ -149,7 +142,6 @@ def render_quiz_screen(questions: list) -> None:
             selected_idx = int(st.session_state.selected)
             is_correct = (selected_idx == int(q.answer_index))
 
-            # 最終回答の正誤（上書き）
             st.session_state.last_answer_map[q_no] = bool(is_correct)
 
             if is_correct:
@@ -182,10 +174,8 @@ def render_quiz_screen(questions: list) -> None:
         with c2:
             prev = st.button("前へ", disabled=(idx == 0), use_container_width=True)
         with c3:
-            # 判定済みでないと次へ進めない（未判定のまま進行しない）
             next_ = st.button(next_label, disabled=not disabled, use_container_width=True)
 
-        # 判定結果の表示（判定済みのときのみ）
         if bool(st.session_state.answered):
             if int(st.session_state.selected) == int(q.answer_index):
                 st.success("正解")
@@ -212,12 +202,11 @@ def render_quiz_screen(questions: list) -> None:
             st.rerun()
 
     with right:
-        # 学習状況：最終回答ベース
         final_answered = len(st.session_state.last_answer_map)
         final_correct = sum(1 for v in st.session_state.last_answer_map.values() if v)
         final_remaining = max(0, total - final_answered)
 
-        open_card("学習状況", "", "&nbsp;")
+        open_card("学習状況", "", "")
         st.markdown(
             f"""
 <div class="gx-statgrid">
@@ -233,7 +222,7 @@ def render_quiz_screen(questions: list) -> None:
 
         st.write("")
 
-        open_card("リセット", "", "&nbsp;")
+        open_card("リセット", "", "")
         if st.button("リセット", use_container_width=True):
             reset_run(total)
             st.rerun()
