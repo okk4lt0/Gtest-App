@@ -2,7 +2,14 @@
 
 from __future__ import annotations
 
+import html
+
 import streamlit as st
+
+
+def _esc(text: object) -> str:
+    # HTML用にエスケープする
+    return html.escape("" if text is None else str(text), quote=True)
 
 
 def inject_css(css_text: str) -> None:
@@ -23,12 +30,12 @@ def render_topbar(title: str, subtitle: str, set_label: str) -> None:
       </svg>
     </div>
     <div class="gx-title">
-      <b>{title}</b>
-      <span>{subtitle}</span>
+      <b>{_esc(title)}</b>
+      <span>{_esc(subtitle)}</span>
     </div>
   </div>
   <div class="gx-actions">
-    <div class="gx-pill"><small>セット</small><b>{set_label}</b></div>
+    <div class="gx-pill"><small>セット</small><b>{_esc(set_label)}</b></div>
   </div>
 </div>
 """,
@@ -43,10 +50,10 @@ def open_card(header_title: str, header_subtitle: str, header_badge: str) -> Non
 <div class="gx-card">
   <div class="gx-card-hd">
     <div class="left">
-      <b>{header_title}</b>
-      <span>{header_subtitle}</span>
+      <b>{_esc(header_title)}</b>
+      <span>{_esc(header_subtitle)}</span>
     </div>
-    <div class="gx-badge accent">{header_badge}</div>
+    <div class="gx-badge accent">{_esc(header_badge)}</div>
   </div>
   <div class="gx-card-bd">
 """,
@@ -61,14 +68,26 @@ def close_card() -> None:
 
 def render_progress(current: int, total: int, accuracy_pct: int) -> None:
     # 進捗バーを描画する
-    pct = 0 if total <= 0 else int(round((current / total) * 100))
+    try:
+        cur = int(current)
+        tot = int(total)
+        acc = int(accuracy_pct)
+    except Exception:
+        cur, tot, acc = 0, 0, 0
+
+    pct = 0
+    if tot > 0:
+        pct = int(round((max(0, min(cur, tot)) / tot) * 100))
+
+    acc = max(0, min(acc, 100))
+
     st.markdown(
         f"""
 <div class="gx-progress">
   <div class="gx-bar"><i style="width:{pct}%;"></i></div>
   <div class="gx-meta">
-    <span>{current} / {total}</span>
-    <span>正答率: {accuracy_pct}%</span>
+    <span>{cur} / {tot}</span>
+    <span>正答率: {acc}%</span>
   </div>
 </div>
 """,
@@ -78,12 +97,17 @@ def render_progress(current: int, total: int, accuracy_pct: int) -> None:
 
 def render_tags(category: str, difficulty: int, qtype: str) -> None:
     # タグ行を描画する
+    try:
+        diff = int(difficulty)
+    except Exception:
+        diff = 0
+
     st.markdown(
         f"""
 <div class="gx-tags">
-  <span class="gx-badge">{category}</span>
-  <span class="gx-badge warn">難易度: {difficulty}</span>
-  <span class="gx-badge">形式: {qtype}</span>
+  <span class="gx-badge">{_esc(category)}</span>
+  <span class="gx-badge warn">難易度: {_esc(diff)}</span>
+  <span class="gx-badge">形式: {_esc(qtype)}</span>
 </div>
 """,
         unsafe_allow_html=True,
@@ -92,19 +116,19 @@ def render_tags(category: str, difficulty: int, qtype: str) -> None:
 
 def render_question_text(text: str) -> None:
     # 問題文を描画する
-    st.markdown(f'<div class="gx-qtext">{text}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="gx-qtext">{_esc(text)}</div>', unsafe_allow_html=True)
 
 
 def render_stats_panel(answered: int, correct: int, streak: int, remaining: int) -> None:
     # 統計カードを描画する
-    open_card("学習状況", "最小限の指標だけ表示します", "")
+    open_card("学習状況", "", "")
     st.markdown(
         f"""
 <div class="gx-statgrid">
-  <div class="gx-stat"><small>回答</small><b>{answered}</b></div>
-  <div class="gx-stat"><small>正解</small><b>{correct}</b></div>
-  <div class="gx-stat"><small>連続正解</small><b>{streak}</b></div>
-  <div class="gx-stat"><small>残り</small><b>{remaining}</b></div>
+  <div class="gx-stat"><small>回答</small><b>{_esc(int(answered))}</b></div>
+  <div class="gx-stat"><small>正解</small><b>{_esc(int(correct))}</b></div>
+  <div class="gx-stat"><small>連続正解</small><b>{_esc(int(streak))}</b></div>
+  <div class="gx-stat"><small>残り</small><b>{_esc(int(remaining))}</b></div>
 </div>
 """,
         unsafe_allow_html=True,
