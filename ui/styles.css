@@ -29,14 +29,16 @@
     var(--bg);
 }
 
-/* Layout width */
+/* Layout width + iPhone safe area */
 .block-container{
   max-width: 980px;
-  padding-top: 1.2rem;
-  padding-bottom: 2.2rem;
+  padding-top: calc(1.2rem + env(safe-area-inset-top));
+  padding-bottom: calc(2.2rem + env(safe-area-inset-bottom));
+  padding-left: calc(1rem + env(safe-area-inset-left));
+  padding-right: calc(1rem + env(safe-area-inset-right));
 }
 
-/* Hide default Streamlit chrome spacing issues */
+/* Hide default Streamlit chrome (best-effort) */
 header, footer{ visibility: hidden; height: 0; }
 [data-testid="stToolbar"]{ visibility: hidden; height: 0; }
 [data-testid="stStatusWidget"]{ visibility: hidden; height: 0; }
@@ -48,17 +50,26 @@ header, footer{ visibility: hidden; height: 0; }
   background: rgba(255,255,255,.03) !important;
   color: var(--text) !important;
   padding: 10px 12px !important;
-  transition: transform .06s ease, background .2s ease, border-color .2s ease;
+  transition: transform .06s ease, background .2s ease, border-color .2s ease, opacity .2s ease;
 }
 .stButton > button:hover{ background: rgba(255,255,255,.06) !important; }
 .stButton > button:active{ transform: translateY(1px); }
 .stButton > button:focus-visible{ outline: none !important; box-shadow: var(--focus) !important; }
+.stButton > button:disabled{
+  opacity: .55 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+}
 
-/* Primary button (we will apply via CSS hook class if needed) */
+/* Primary button (StreamlitのDOM差分に備えて複数セレクタで補強) */
+[data-testid="baseButton-primary"] > button,
+button[kind="primary"],
 .gx-primary .stButton > button{
   border-color: rgba(124,92,255,.45) !important;
   background: rgba(124,92,255,.18) !important;
 }
+[data-testid="baseButton-primary"] > button:hover,
+button[kind="primary"]:hover,
 .gx-primary .stButton > button:hover{
   background: rgba(124,92,255,.24) !important;
 }
@@ -230,8 +241,10 @@ header, footer{ visibility: hidden; height: 0; }
   flex-wrap:wrap;
 }
 
-/* Options: style Streamlit radio to match card options */
-div[role="radiogroup"] > label{
+/* Options: style Streamlit radio to match card options
+   DOM差分に備えて複数のセレクタを用意する */
+div[role="radiogroup"] > label,
+[data-testid="stRadio"] div[role="radiogroup"] > label{
   border:1px solid var(--line);
   background: rgba(255,255,255,.03);
   border-radius: 14px;
@@ -242,13 +255,24 @@ div[role="radiogroup"] > label{
   gap:10px;
   cursor:pointer;
 }
-div[role="radiogroup"] > label:hover{
+div[role="radiogroup"] > label:hover,
+[data-testid="stRadio"] div[role="radiogroup"] > label:hover{
   background: rgba(255,255,255,.06);
 }
+
+/* :has が使えない環境向けのフォールバック */
+div[role="radiogroup"] > label:focus-within,
+[data-testid="stRadio"] div[role="radiogroup"] > label:focus-within{
+  box-shadow: var(--focus);
+}
+
+/* :has をサポートする環境ではより厳密に当てる */
 div[role="radiogroup"] > label:has(input:focus-visible){
   box-shadow: var(--focus);
 }
-div[role="radiogroup"] > label span{
+
+div[role="radiogroup"] > label span,
+[data-testid="stRadio"] div[role="radiogroup"] > label span{
   color: var(--text);
   font-size: 14.5px;
   line-height: 1.5;
