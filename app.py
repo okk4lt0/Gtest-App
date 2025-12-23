@@ -21,16 +21,19 @@ def main() -> None:
     st.set_page_config(page_title="G検定 問題集", layout="wide")
 
     base = Path(__file__).parent
-    inject_css(_read_text(base / "ui" / "styles.css"))
+    css_path = base / "ui" / "styles.css"
+    inject_css(_read_text(css_path))
 
     questions = get_questions()
     init_state(len(questions))
 
-    if st.session_state.mode == "result":
-        render_result_screen(questions)
-        return
+    mode = str(st.session_state.mode)
 
-    render_quiz_screen(questions)
+    if mode == "result":
+        render_result_screen(questions)
+    else:
+        st.session_state.mode = "quiz"
+        render_quiz_screen(questions)
 
 
 if __name__ == "__main__":
