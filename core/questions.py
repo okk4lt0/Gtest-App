@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List
+from typing import Iterable
 
 
 @dataclass(frozen=True)
@@ -13,14 +13,54 @@ class Question:
     difficulty: int
     qtype: str
     text: str
-    options: List[str]
+    options: list[str]
     answer_index: int
     explanation: str
 
 
-def get_questions() -> List[Question]:
+def _validate_questions(questions: Iterable[Question]) -> list[Question]:
+    # 問題セットの整合性を検証する
+    qs = list(questions)
+
+    if not qs:
+        raise ValueError("questions is empty")
+
+    seen: set[str] = set()
+    for q in qs:
+        if not q.qid:
+            raise ValueError("qid is empty")
+        if q.qid in seen:
+            raise ValueError(f"duplicate qid: {q.qid}")
+        seen.add(q.qid)
+
+        if not q.category:
+            raise ValueError(f"{q.qid}: category is empty")
+        if not q.qtype:
+            raise ValueError(f"{q.qid}: qtype is empty")
+        if not q.text:
+            raise ValueError(f"{q.qid}: text is empty")
+        if not q.explanation:
+            raise ValueError(f"{q.qid}: explanation is empty")
+
+        if not isinstance(q.difficulty, int):
+            raise ValueError(f"{q.qid}: difficulty must be int")
+        if q.difficulty < 1 or q.difficulty > 5:
+            raise ValueError(f"{q.qid}: difficulty must be 1..5")
+
+        if not q.options or len(q.options) < 2:
+            raise ValueError(f"{q.qid}: options must have >= 2 items")
+
+        if not isinstance(q.answer_index, int):
+            raise ValueError(f"{q.qid}: answer_index must be int")
+        if q.answer_index < 0 or q.answer_index >= len(q.options):
+            raise ValueError(f"{q.qid}: answer_index out of range")
+
+    return qs
+
+
+def get_questions() -> list[Question]:
     # 問題セットを返す
-    return [
+    questions = [
         Question(
             qid="q1",
             category="AI基礎",
@@ -67,3 +107,4 @@ def get_questions() -> List[Question]:
             explanation="畳み込みと重み共有により局所特徴を効率よく扱い、パラメータ数も抑えられる。",
         ),
     ]
+    return _validate_questions(questions)
